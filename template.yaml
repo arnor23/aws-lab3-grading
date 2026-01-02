@@ -19,6 +19,7 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: !Sub "task3-image-queue-${AWS::AccountId}"
+      VisibilityTimeout: 60
 
   IngestLambdaFunction:
     Type: AWS::Serverless::Function
