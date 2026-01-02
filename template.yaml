@@ -9,21 +9,11 @@ Globals:
     MemorySize: 128
 
 Resources:
+
   ImageBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "task3-images-${AWS::AccountId}-${AWS::Region}"
-      NotificationConfiguration:
-        LambdaConfigurations:
-          - Event: s3:ObjectCreated:*
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: incoming/
-                  - Name: suffix
-                    Value: .jpg
-    DependsOn: IngestLambdaFunction
 
   ImageQueue:
     Type: AWS::SQS::Queue
@@ -54,7 +44,9 @@ Resources:
                   - Name: prefix
                     Value: incoming/
                   - Name: suffix
+                    Value: .jpg
 
+  ProcessorLambdaFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: processor-lambda

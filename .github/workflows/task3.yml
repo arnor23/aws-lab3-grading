@@ -26,10 +26,7 @@ jobs:
           python-version: '3.10'
 
       - name: Install test dependencies
-        run: pip install pytest boto3 requests
-
-      - name: Install SAM
-        run: pip install aws-sam-cli
+        run: pip install pytest boto3 requests aws-sam-cli
 
       - name: Build SAM
         run: sam build --template-file template.yaml
