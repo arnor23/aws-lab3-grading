@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Task 3 - Asynchronous Serverless Image Metadata Pipeline
+
+Globals:
+  Function:
+    Runtime: python3.11
+    Timeout: 60
+    MemorySize: 128
+
+Resources:
+  ImageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "task3-images-${AWS::AccountId}-${AWS::Region}"
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: incoming/
+                  - Name: suffix
+                    Value: .jpg
+    DependsOn: IngestLambdaFunction
+
+  ImageQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "task3-image-queue-${AWS::AccountId}"
+
+  IngestLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ingest-lambda
+      Handler: app.lambda_handler
+      CodeUri: ingest/
+      Policies:
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt ImageQueue.QueueName
+      Environment:
+        Variables:
+          QUEUE_URL: !Ref ImageQueue
+      Events:
+        S3UploadEvent:
+          Type: S3
+          Properties:
+            Bucket: !Ref ImageBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: incoming/
+                  - Name: suffix
+
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: processor-lambda
+      Handler: app.lambda_handler
+      CodeUri: processor/
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref ImageBucket
+        - S3WritePolicy:
+            BucketName: !Ref ImageBucket
+        - SQSPollerPolicy:
+            QueueName: !GetAtt ImageQueue.QueueName
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref ImageBucket
+      Events:
+        SQSMessageEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt ImageQueue.Arn
