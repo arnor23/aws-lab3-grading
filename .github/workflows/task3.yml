@@ -1,0 +1,41 @@
+name: Task 3 Validation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  task3:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/githubconnect
+          aws-region: us-east-1
+
+      - name: Install test dependencies
+        run: pip install pytest boto3 requests
+
+      - name: Install SAM
+        run: pip install aws-sam-cli
+
+      - name: Build SAM
+        run: sam build
+
+      - name: Deploy SAM
+        run: |
+          sam deploy \
+            --stack-name coderoad-task-3 \
+            --resolve-s3 \
+            --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset
+
+      - name: Run tests
+        run: pytest -v
