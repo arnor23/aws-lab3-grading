@@ -12,20 +12,22 @@ def lambda_handler(event, context):
         key = body["key"]
 
         metadata_key = key.replace("incoming/", "metadata/") + ".json"
-
         try:
             s3.head_object(Bucket=bucket, Key=metadata_key)
             continue
-        except:
+        except s3.exceptions.ClientError:
             pass
 
         obj = s3.get_object(Bucket=bucket, Key=key)
         image = Image.open(BytesIO(obj["Body"].read()))
 
         metadata = {
+            "source_bucket": bucket,
+            "source_key": key,
             "format": image.format,
             "width": image.width,
-            "height": image.height
+            "height": image.height,
+            "file_size_bytes": obj["ContentLength"]
         }
 
         s3.put_object(

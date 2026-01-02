@@ -5,11 +5,10 @@ Description: Task 3 - Asynchronous Serverless Image Metadata Pipeline
 Globals:
   Function:
     Runtime: python3.10
-    Timeout: 60
+    Timeout: 30
     MemorySize: 128
 
 Resources:
-
   ImageBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -19,7 +18,6 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: !Sub "task3-image-queue-${AWS::AccountId}"
-      VisibilityTimeout: 60
 
   IngestLambdaFunction:
     Type: AWS::Serverless::Function
@@ -68,3 +66,8 @@ Resources:
           Type: SQS
           Properties:
             Queue: !GetAtt ImageQueue.Arn
+
+Outputs:
+  BucketName:
+    Description: "S3 bucket for images and metadata"
+    Value: !Ref ImageBucket
