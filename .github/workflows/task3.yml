@@ -35,7 +35,7 @@ jobs:
         run: |
           sam deploy \
             --stack-name coderoad-task-3 \
-            --resolve-s3 \
+            --s3-bucket aws-sam-cli-managed-${{ github.run_id }} \
             --capabilities CAPABILITY_IAM \
             --no-fail-on-empty-changeset
 
